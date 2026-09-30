@@ -1,0 +1,119 @@
+==============================================================================
+NetSage AI - Deterministic Rule Checker Sample Outputs
+==============================================================================
+This reference file exhibits realistic outputs produced by rule_checker.py
+across PASS, FAIL, and WARNING states.
+
+------------------------------------------------------------------------------
+1. DEFAULT GATEWAY CHECK
+------------------------------------------------------------------------------
+PASS:
+Input:
+  Host IP:  192.168.10.25
+  Mask:     255.255.255.0
+  Gateway:  192.168.10.1
+Result:
+  Status:   PASS
+  Check:    gateway_mismatch
+  Message:  Default gateway belongs to the same subnet as the host.
+  Evidence: 192.168.10.1 is in local subnet 192.168.10.0/24.
+
+FAIL:
+Input:
+  Host IP:  192.168.10.25
+  Mask:     255.255.255.0
+  Gateway:  192.168.20.1
+Result:
+  Status:   FAIL
+  Check:    gateway_mismatch
+  Message:  Default gateway is outside the host subnet.
+  Evidence: 192.168.20.1 is not in 192.168.10.0/24.
+
+------------------------------------------------------------------------------
+2. SUBNET MASK VALIDATION
+------------------------------------------------------------------------------
+PASS:
+Input:
+  Mask:     255.255.255.0
+Result:
+  Status:   PASS
+  Check:    valid_subnet_mask
+  Message:  Subnet mask 255.255.255.0 is valid (/24).
+  Evidence: Netmask 255.255.255.0 corresponds to /24.
+
+FAIL:
+Input:
+  Mask:     255.255.255.130
+Result:
+  Status:   FAIL
+  Check:    valid_subnet_mask
+  Message:  Invalid subnet mask (non-contiguous or invalid octets): 255.255.255.130 is not a valid netmask.
+  Evidence: Mask '255.255.255.130' is not a valid IPv4 netmask.
+
+------------------------------------------------------------------------------
+3. APIPA / DHCP LEASE FAILURE
+------------------------------------------------------------------------------
+FAIL:
+Input:
+  Host IP:  169.254.120.44
+Result:
+  Status:   FAIL
+  Check:    apipa_check
+  Message:  Client has received an APIPA (Automatic Private IP Addressing) address, indicating DHCP failure.
+  Evidence: 169.254.120.44 belongs to link-local block 169.254.0.0/16.
+
+------------------------------------------------------------------------------
+4. INTERFACE STATUS
+------------------------------------------------------------------------------
+FAIL (Administratively Down):
+Input:
+  Show Output: GigabitEthernet0/0   10.1.1.1   YES manual administratively down down
+Result:
+  Status:   FAIL
+  Check:    interface_status
+  Message:  Interface is administratively shutdown ('administratively down').
+  Evidence: Interface status reports 'administratively down down'.
+
+FAIL (Err-Disabled):
+Input:
+  Show Output: Fa0/5     Conf-Room    err-disabled 5    auto    auto  10/100BaseTX
+Result:
+  Status:   FAIL
+  Check:    interface_status
+  Message:  Interface is in 'err-disabled' state (port security or loop violation).
+  Evidence: Interface status reports 'err-disabled'.
+
+------------------------------------------------------------------------------
+5. ACCESS CONTROL LIST (ACL) FILTERING
+------------------------------------------------------------------------------
+FAIL:
+Input:
+  Show Output: 20 deny tcp any host 203.0.113.80 eq www (45 matches)
+Result:
+  Status:   FAIL
+  Check:    acl_deny
+  Message:  Traffic matches explicit ACL deny rule (deny tcp any host 203.0.113.80 eq www).
+  Evidence: deny tcp any host 203.0.113.80 eq www matches: 45.
+
+------------------------------------------------------------------------------
+6. INSUFFICIENT EVIDENCE / WARNING
+------------------------------------------------------------------------------
+WARNING:
+Input:
+  NAT stats: Hits: 320  Misses: 45
+Result:
+  Status:   WARNING
+  Check:    nat_configuration
+  Message:  NAT translation misses detected (45 misses), indicating unpermitted subnets.
+  Evidence: NAT statistics: Hits=320, Misses=45.
+
+WARNING (Missing diagnostic output):
+Input:
+  Suspected Fault: Routing
+  Available Command: show ip interface brief
+Result:
+  Status:   WARNING
+  Check:    evidence_completeness
+  Message:  Evidence is insufficient to confirm the suspected fault.
+  Evidence: Suspected routing anomaly requires 'show ip route' to confirm.
+==============================================================================

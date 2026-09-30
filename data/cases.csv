@@ -1,0 +1,378 @@
+case_id,title,symptom,topology,device,client_configuration,show_command,show_output,expected_fault,expected_root_cause,osi_layer,concept,severity,expected_next_command,expected_fix,expected_evidence
+NET001,Access Port Assigned to Incorrect VLAN,PC1 in HR department cannot reach the HR Gateway (192.168.10.1) or HR File Server (192.168.10.50).,PC1 [Fa0/2] ---> Switch-1 [Gi0/1 Trunk] ---> Router R1 (Subinterfaces .10 and .20),Switch-1,"IP Address: 192.168.10.15
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.10.1
+DNS: 192.168.10.50",show vlan brief,"VLAN Name                             Status    Ports
+---- -------------------------------- --------- -------------------------------
+1    default                          active    Fa0/1, Fa0/7, Fa0/8
+10   HR                               active    Fa0/5, Fa0/6
+20   Sales                            active    Fa0/2, Fa0/3, Fa0/4
+99   Management                       active",VLAN,Switchport FastEthernet0/2 connected to HR PC1 is mistakenly assigned to Sales VLAN 20 instead of HR VLAN 10.,Layer 2 - Data Link,Access Port VLAN Membership & Broadcast Domain Isolation,MEDIUM,show interfaces FastEthernet0/2 switchport,"Switch-1(config)# interface FastEthernet0/2
+Switch-1(config-if)# switchport access vlan 10",show vlan brief clearly displays Fa0/2 listed under VLAN 20 (Sales) rather than VLAN 10 (HR).
+NET002,VLAN Database Missing Defined Access VLAN,Finance PC2 cannot ping its gateway or any network device; switchport LED is solid amber and link reports inactive.,PC2 [Fa0/10] ---> Switch-2 [Gi0/1 Trunk] ---> Distribution Switch,Switch-2,"IP Address: 192.168.30.22
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.30.1
+DNS: 8.8.8.8",show interfaces FastEthernet0/10 switchport,"Name: Fa0/10
+Switchport: Enabled
+Administrative Mode: static access
+Operational Mode: static access
+Administrative Trunking Encapsulation: dot1q
+Negotiation of Trunking: Off
+Access Mode VLAN: 30 ((Inactive))
+Trunking Native Mode VLAN: 1 (default)
+Voice VLAN: none",VLAN,"Port Fa0/10 is assigned to VLAN 30, but VLAN 30 has not been created in the switch VLAN database, rendering the port inactive.",Layer 2 - Data Link,VLAN Database Creation & Port Inactive State,HIGH,show vlan id 30,"Switch-2(config)# vlan 30
+Switch-2(config-vlan)# name Finance
+Switch-2(config-vlan)# exit","show interfaces switchport shows 'Access Mode VLAN: 30 ((Inactive))', confirming VLAN 30 does not exist in the VLAN table."
+NET003,Router-on-a-Stick Subinterface 802.1Q Tag Mismatch,"Hosts in VLAN 20 can ping default gateway 192.168.20.1, but hosts in VLAN 10 cannot ping default gateway 192.168.10.1.","VLAN 10 / VLAN 20 Hosts ---> Switch-1 [Gi0/1 Trunk] ---> Router R1 [Gi0/0.10, Gi0/0.20]",Router R1,"IP Address: 192.168.10.100
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.10.1
+DNS: 192.168.10.5",show running-config interface GigabitEthernet0/0.10,"Building configuration...
+
+Current configuration : 138 bytes
+!
+interface GigabitEthernet0/0.10
+ encapsulation dot1Q 12
+ ip address 192.168.10.1 255.255.255.0
+end",VLAN,"Subinterface Gi0/0.10 is configured with 802.1Q encapsulation tag 12 instead of tag 10, dropping tagged frames originating from VLAN 10.",Layer 2 - Data Link,Router-on-a-Stick 802.1Q Subinterface Encapsulation,HIGH,show ip interface brief GigabitEthernet0/0.10,"R1(config)# interface GigabitEthernet0/0.10
+R1(config-subif)# encapsulation dot1Q 10",show running-config interface GigabitEthernet0/0.10 shows 'encapsulation dot1Q 12' while IP is configured for VLAN 10 (192.168.10.1/24).
+NET004,Voice VLAN Configured as Data Access VLAN,Desktop PC plugged into Cisco IP Phone PC port is placed into Voice VLAN 150 and cannot communicate with corporate data servers.,PC ---> Cisco IP Phone 7841 ---> Switch-1 [Fa0/3] ---> Corporate Network,Switch-1,"IP Address: 192.168.150.45
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.150.1
+DNS: 192.168.150.1",show interfaces FastEthernet0/3 switchport,"Name: Fa0/3
+Switchport: Enabled
+Administrative Mode: static access
+Operational Mode: static access
+Access Mode VLAN: 150 (Voice)
+Trunking Native Mode VLAN: 1 (default)
+Voice VLAN: 150",VLAN,"The switchport access VLAN was mistakenly configured as Voice VLAN 150 instead of Data VLAN 10, causing untagged PC frames to join the Voice broadcast domain.",Layer 2 - Data Link,Voice VLAN vs. Native Access Data VLAN Separation,MEDIUM,show running-config interface FastEthernet0/3,"Switch-1(config)# interface FastEthernet0/3
+Switch-1(config-if)# switchport access vlan 10
+Switch-1(config-if)# switchport voice vlan 150",show interfaces FastEthernet0/3 switchport displays 'Access Mode VLAN: 150 (Voice)' matching the Voice VLAN.
+NET005,Client Default Gateway Outside Host Subnet,"PC1 can ping neighboring PCs in 192.168.10.0/24, but cannot communicate with any remote subnet or Internet destination.",PC1 (192.168.10.25/24) ---> Switch-1 ---> Router R1 [Gi0/0: 192.168.10.1/24],PC1,"IP Address: 192.168.10.25
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.20.1
+DNS: 8.8.8.8",ipconfig /all,"Windows IP Configuration
+
+Ethernet adapter Local Area Connection:
+   IPv4 Address. . . . . . . . . . . : 192.168.10.25(Preferred)
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : 192.168.20.1
+   DNS Servers . . . . . . . . . . . : 8.8.8.8",Default Gateway,"The configured default gateway (192.168.20.1) does not reside within the client's local subnet (192.168.10.0/24), preventing ARP resolution for off-subnet routing.",Layer 3 - Network,Subnet Mask Boundaries and Default Gateway Reachability,HIGH,arp -a,Configure PC1 Default Gateway to 192.168.10.1 matching R1 GigabitEthernet0/0.,"ipconfig /all shows host IP 192.168.10.25 with mask 255.255.255.0, where default gateway 192.168.20.1 is in a different /24 network."
+NET006,Default Gateway Router Interface Administratively Down,All workstations in 10.1.1.0/24 report 'Request timed out' when pinging their default gateway (10.1.1.1).,LAN Workstations (10.1.1.0/24) ---> Switch-1 ---> Router R1 [Gi0/0],Router R1,"IP Address: 10.1.1.45
+Subnet Mask: 255.255.255.0
+Default Gateway: 10.1.1.1
+DNS: 10.1.1.1",show ip interface brief,"Interface                  IP-Address      OK? Method Status                Protocol
+GigabitEthernet0/0         10.1.1.1        YES manual administratively down down
+GigabitEthernet0/1         203.0.113.1     YES manual up                    up
+Loopback0                  1.1.1.1         YES manual up                    up",Default Gateway,Router interface GigabitEthernet0/0 (the default gateway) is in 'administratively down' status due to a missing 'no shutdown' command.,Layer 1 - Physical,Interface Administrative Status & Layer 1 Up State,CRITICAL,show interfaces GigabitEthernet0/0,"R1(config)# interface GigabitEthernet0/0
+R1(config-if)# no shutdown",show ip interface brief indicates GigabitEthernet0/0 is 'administratively down down'.
+NET007,Mismatched Subnet Mask on Gateway Interface,"Hosts with IP addresses 172.16.1.2 through 172.16.1.126 can reach the router, but hosts with IPs 172.16.1.130 through 172.16.1.250 cannot communicate with the gateway.",Subnet 172.16.1.0/24 Clients ---> Switch-1 ---> Router R1 [Gi0/1],Router R1,"IP Address: 172.16.1.140
+Subnet Mask: 255.255.255.0
+Default Gateway: 172.16.1.1
+DNS: 8.8.8.8",show ip interface GigabitEthernet0/1,"GigabitEthernet0/1 is up, line protocol is up
+  Internet address is 172.16.1.1/25
+  Broadcast address is 172.16.1.127
+  Address determined by setup command
+  MTU is 1500 bytes
+  Helper address is not set
+  Directed broadcast forwarding is disabled",Default Gateway,"The router gateway interface Gi0/1 is configured with a /25 subnet mask (255.255.255.128) instead of /24 (255.255.255.0), causing it to ignore packets from upper half hosts.",Layer 3 - Network,Variable Length Subnet Masking (VLSM) & Broadcast Domain Limits,HIGH,show running-config interface GigabitEthernet0/1,"R1(config)# interface GigabitEthernet0/1
+R1(config-if)# ip address 172.16.1.1 255.255.255.0","show ip interface Gi0/1 shows 'Internet address is 172.16.1.1/25' with broadcast 172.16.1.127, while clients expect a /24 subnet."
+NET008,DHCP Address Pool Exhaustion,Newly connected workstations fail to obtain an IP address and default to an APIPA address 169.254.x.x.,Workstations ---> Switch-1 ---> Router R1 (DHCP Server),Router R1,"IP Address: 169.254.120.44
+Subnet Mask: 255.255.0.0
+Default Gateway: 0.0.0.0
+DNS: 0.0.0.0",show ip dhcp pool LAN_POOL,"Pool LAN_POOL :
+ Utilization mark (high/low)    : 100 / 0
+ Subnet size (total/usable)     : 30/28
+ Total addresses                : 30
+ Leased addresses               : 28
+ Excluded addresses             : 2
+ Pending event                  : none
+ 1 subnet is currently in the pool :
+ Current index        IP pool range                    Leased addresses
+ 192.168.1.30         192.168.1.1      192.168.1.30     28",DHCP,"The configured DHCP pool subnet is only a /27 with 28 usable addresses, and 100% of available leases have been consumed.",Layer 7 - Application,DHCP Address Pool Allocation & Lease Exhaustion,HIGH,show ip dhcp binding,"R1(config)# ip dhcp pool LAN_POOL
+R1(config-dhcp)# network 192.168.1.0 255.255.255.0","show ip dhcp pool indicates Total addresses: 30, Leased addresses: 28, with 100% utilization mark and no free addresses."
+NET009,Missing IP Helper-Address on Gateway Router,Branch office PCs fail to obtain an IP address via DHCP from the central corporate DHCP server (10.10.10.5).,Branch PCs ---> Branch Switch ---> Branch Router R1 [Gi0/0] ---> WAN ---> Central DHCP Server (10.10.10.5),Branch Router R1,"IP Address: 169.254.88.19
+Subnet Mask: 255.255.0.0
+Default Gateway: 0.0.0.0
+DNS: 0.0.0.0",show running-config interface GigabitEthernet0/0,"Building configuration...
+
+Current configuration : 152 bytes
+!
+interface GigabitEthernet0/0
+ description Branch Local LAN
+ ip address 192.168.50.1 255.255.255.0
+ duplex auto
+ speed auto
+end",DHCP,"The router interface GigabitEthernet0/0 does not have an 'ip helper-address' configured, dropping DHCP broadcast DISCOVER packets at Layer 3.",Layer 3 - Network,DHCP Relay Agent & IP Helper-Address Broadcast Forwarding,HIGH,show ip interface GigabitEthernet0/0,"R1(config)# interface GigabitEthernet0/0
+R1(config-if)# ip helper-address 10.10.10.5",show running-config interface GigabitEthernet0/0 shows no 'ip helper-address' command configured.
+NET010,DHCP Scope Default-Router Option Typo,"Client PCs receive an IP address and DNS successfully via DHCP, but cannot access external networks; router LAN IP is 192.168.1.1.",Client PCs ---> Switch-1 ---> Router R1 (DHCP Server LAN IP 192.168.1.1),Router R1,"IP Address: 192.168.1.55
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.1.254
+DNS: 8.8.8.8",show running-config | section dhcp,"ip dhcp excluded-address 192.168.1.1 192.168.1.10
+!
+ip dhcp pool OFFICE_LAN
+   network 192.168.1.0 255.255.255.0
+   default-router 192.168.1.254
+   dns-server 8.8.8.8",DHCP,"The DHCP pool configuration specifies 'default-router 192.168.1.254', which does not exist; the actual default gateway interface is 192.168.1.1.",Layer 7 - Application,DHCP Option 3 (Default Router) Configuration,MEDIUM,show ip interface brief,"R1(config)# ip dhcp pool OFFICE_LAN
+R1(config-dhcp)# default-router 192.168.1.1",show running-config shows 'default-router 192.168.1.254' while R1 local interface is 192.168.1.1.
+NET011,DHCP Pool Excluded Address Overlap with Gateway,Duplicate IP address alert '%IP-4-DUPADDR: Duplicate address 192.168.1.1' occurs; PC intermittently loses gateway connectivity.,Workstations ---> Switch-1 ---> Router R1 (192.168.1.1),Router R1,"IP Address: 192.168.1.1
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.1.1",show ip dhcp binding,"IP address       Client-ID/              Lease expiration        Type
+                 Hardware address
+192.168.1.1      0100.5079.6668.01       Oct 12 2026 10:14 AM    Automatic
+192.168.1.2      0100.5079.6668.02       Oct 12 2026 10:15 AM    Automatic",DHCP,"The router's own IP address 192.168.1.1 was not excluded from the DHCP pool via 'ip dhcp excluded-address', causing it to be handed out to a client.",Layer 3 - Network,DHCP Excluded Addresses & Static IP Address Conflicts,CRITICAL,show running-config | include excluded-address,"R1(config)# ip dhcp excluded-address 192.168.1.1 192.168.1.10
+R1# clear ip dhcp binding 192.168.1.1","show ip dhcp binding reveals lease of 192.168.1.1 to client MAC 0100.5079.6668.01, conflicting with router interface IP."
+NET012,Incorrect DNS Server IP Address Configured,"PC can ping public IP 8.8.8.8 and local gateway, but web browser fails to open any website by domain name (e.g. cisco.com).",PC1 ---> Switch-1 ---> Router R1 ---> Internet DNS (8.8.8.8),PC1,"IP Address: 192.168.1.40
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.1.1
+DNS Server: 8.8.4.40",nslookup cisco.com,"Server:  UnKnown
+Address:  8.8.4.40
+
+DNS request timed out.
+    timeout was 2 seconds.
+DNS request timed out.
+    timeout was 2 seconds.
+*** Request to UnKnown timed-out",DNS,"Client DNS server address is configured as 8.8.4.40 (a typo for 8.8.4.4 or 8.8.8.8), which is unresponsive to DNS queries.",Layer 7 - Application,DNS Resolver Configuration & UDP Port 53 Name Resolution,MEDIUM,ping 8.8.4.40,Update PC1 DNS server configuration to 8.8.8.8 or 8.8.4.4.,nslookup shows request timeout attempting to query non-existent server 8.8.4.40 while IP connectivity is functional.
+NET013,Packet Tracer DNS Service Disabled on Server,"Internal domain name 'intranet.corp.local' does not resolve, but pinging server IP 192.168.1.10 succeeds.",PC1 ---> Switch-1 ---> Server-PT (DNS/Web Server: 192.168.1.10),Server-PT,"IP Address: 192.168.1.30
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.1.1
+DNS Server: 192.168.1.10",nslookup intranet.corp.local 192.168.1.10,"Server:  intranet.corp.local
+Address:  192.168.1.10
+
+*** intranet.corp.local can't find intranet.corp.local: No response from server
+Packet Tracer Server Services State:
+HTTP: ON
+DHCP: OFF
+DNS Service: OFF
+Resource Record: intranet.corp.local -> 192.168.1.10",DNS,The DNS service toggle on Cisco Packet Tracer Server-PT is set to 'OFF' despite records being present in the table.,Layer 7 - Application,DNS Server Daemon/Service Operational State,HIGH,netstat -an | findstr :53,Navigate to Server-PT -> Services -> DNS -> Click radio button 'ON'.,"Show output indicates 'DNS Service: OFF' on Server-PT, rejecting inbound UDP/TCP 53 requests."
+NET014,Missing DNS A Record for Web Server,Client PCs can resolve external websites but get NXDOMAIN error when attempting to resolve internal portal 'portal.lan'.,PC1 ---> Switch-1 ---> Router R1 ---> Internal DNS Server (10.0.0.53),Internal DNS Server,"IP Address: 10.0.0.100
+Subnet Mask: 255.255.255.0
+Default Gateway: 10.0.0.1
+DNS: 10.0.0.53",nslookup portal.lan 10.0.0.53,"Server:  dns.internal.lan
+Address:  10.0.0.53
+
+*** dns.internal.lan can't find portal.lan: Non-existent domain (NXDOMAIN)
+Zone Table Records:
+mail.lan      A    10.0.0.25
+files.lan     A    10.0.0.30
+dc1.lan       A    10.0.0.53",DNS,The internal authoritative DNS server is missing an 'A' resource record mapping 'portal.lan' to web server IP 10.0.0.80.,Layer 7 - Application,Authoritative DNS Zone Resource Records (A Record),MEDIUM,ping 10.0.0.80,"Add DNS A-Record on DNS server: Name: portal.lan, Address: 10.0.0.80.",nslookup returns 'Non-existent domain (NXDOMAIN)' and Zone Table Records confirm absence of portal.lan.
+NET015,Missing Default Route on Edge Router,"LAN hosts can communicate internally and ping edge router R1, but cannot reach any Internet IP (e.g. 203.0.113.2 or 8.8.8.8).",LAN (192.168.1.0/24) ---> Edge Router R1 [Se0/0/0] ---> ISP Router (203.0.113.2),Router R1,"IP Address: 192.168.1.25
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.1.1
+DNS: 8.8.8.8",show ip route,"Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
+
+Gateway of last resort is not set
+
+      192.168.1.0/24 is variably subnetted, 2 subnets, 2 masks
+C        192.168.1.0/24 is directly connected, GigabitEthernet0/0
+L        192.168.1.1/32 is directly connected, GigabitEthernet0/0
+      203.0.113.0/30 is variably subnetted, 2 subnets, 2 masks
+C        203.0.113.0/30 is directly connected, Serial0/0/0
+L        203.0.113.1/32 is directly connected, Serial0/0/0",Routing,"Edge router R1 has no default route (gateway of last resort is not set), discarding off-net packets toward the Internet.",Layer 3 - Network,Default Static Route (0.0.0.0/0) & Gateway of Last Resort,CRITICAL,show ip route 0.0.0.0,R1(config)# ip route 0.0.0.0 0.0.0.0 203.0.113.2,show ip route explicitly states 'Gateway of last resort is not set' with no 0.0.0.0/0 route present.
+NET016,OSPF Passive Interface Blocking Neighbor Adjacency,"Routers R1 and R2 are directly connected via Gi0/1, but OSPF routes from R2 are not appearing in R1's routing table.",Router R1 [Gi0/1: 10.0.12.1/30] <===> Router R2 [Gi0/1: 10.0.12.2/30],Router R1,N/A (Router-to-Router link),show ip ospf neighbor,"Neighbor ID     Pri   State           Dead Time   Address         Interface
+(Empty table)
+
+R1# show running-config | section ospf
+router ospf 1
+ passive-interface GigabitEthernet0/1
+ network 10.0.12.0 0.0.0.3 area 0",Routing,"GigabitEthernet0/1 on R1 is configured as a passive-interface, suppressing OSPF Hello packets and preventing neighbor adjacency formation.",Layer 3 - Network,OSPF Adjacency Formation & Passive Interface Behavior,HIGH,show ip ospf interface GigabitEthernet0/1,"R1(config)# router ospf 1
+R1(config-router)# no passive-interface GigabitEthernet0/1",show ip ospf neighbor is empty and running-config shows 'passive-interface GigabitEthernet0/1'.
+NET017,Static Route Configured with Unreachable Next-Hop,Traffic destined to remote branch network 172.20.1.0/24 is dropped at R1; route does not install in the active routing table.,LAN ---> Router R1 [Gi0/1: 10.1.1.1/30] ---> Router R2 [Gi0/1: 10.1.1.2/30] ---> Remote LAN (172.20.1.0/24),Router R1,"IP Address: 192.168.1.15
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.1.1",show ip route 172.20.1.0,"% Network not in table
+
+R1# show running-config | include ip route
+ip route 172.20.1.0 255.255.255.0 10.1.1.254
+
+R1# show ip arp 10.1.1.254
+(Incomplete ARP resolution for 10.1.1.254)",Routing,"The static route next-hop is configured as 10.1.1.254, which does not exist in the 10.1.1.0/30 subnet; valid next hop is 10.1.1.2.",Layer 3 - Network,Static Route Recursive Lookup & Next-Hop Reachability,HIGH,show ip route 10.1.1.254,"R1(config)# no ip route 172.20.1.0 255.255.255.0 10.1.1.254
+R1(config)# ip route 172.20.1.0 255.255.255.0 10.1.1.2","show running-config shows next-hop 10.1.1.254, but the route is absent from 'show ip route' due to recursive lookup failure."
+NET018,Asymmetric Routing / Missing Return Route on HQ Core,"Branch PC can send packets to HQ Server (10.2.2.10) verified by debug, but receives no ICMP echo replies.",Branch PC (192.168.30.50) ---> Branch R1 ---> HQ Core R2 ---> HQ Server (10.2.2.10),HQ Core Router R2,"IP Address: 192.168.30.50
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.30.1",show ip route 192.168.30.0,"Routing entry for 192.168.30.0/24
+  Known via ""static"", distance 1, metric 0
+% Subnet not in table
+
+Gateway of last resort is not set",Routing,"HQ Core Router R2 has no routing entry for Branch subnet 192.168.30.0/24, dropping return traffic from the server.",Layer 3 - Network,Two-Way Symmetric IP Routing & Return Path Requirement,HIGH,show ip route,R2(config)# ip route 192.168.30.0 255.255.255.0 10.0.0.1,"show ip route 192.168.30.0 on R2 outputs '% Subnet not in table', confirming missing return routing."
+NET019,Standard ACL Implicit Deny Blocking Inter-VLAN Host,"PC1 (192.168.10.10) can ping its default gateway 192.168.10.1, but cannot reach Server 192.168.20.50 in VLAN 20.","VLAN 10 PC1 (192.168.10.10) ---> Router R1 [Gi0/0.10, Gi0/0.20] ---> VLAN 20 Server (192.168.20.50)",Router R1,"IP Address: 192.168.10.10
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.10.1",show access-lists 10,"Standard IP access list 10
+    10 permit 192.168.10.5 (24 matches)
+    (implicit deny any matches: 87)
+
+R1# show running-config interface GigabitEthernet0/0.20
+interface GigabitEthernet0/0.20
+ encapsulation dot1Q 20
+ ip address 192.168.20.1 255.255.255.0
+ ip access-group 10 out",ACL,Access list 10 permits only host 192.168.10.5; traffic from PC1 192.168.10.10 hits the implicit deny at the end of the ACL.,Layer 3/4 - Network/Transport,Access Control List (ACL) Implicit Deny Rule,HIGH,show ip interface GigabitEthernet0/0.20,R1(config)# access-list 10 permit 192.168.10.0 0.0.0.255,show access-lists 10 shows only 'permit 192.168.10.5' with 87 implicit deny matches blocking 192.168.10.10.
+NET020,Extended ACL Statement Denying HTTP/HTTPS Traffic,"Client workstation can ping web server 203.0.113.80 successfully, but web browser connection to port 80/443 times out.",Client (172.16.5.20) ---> Edge Router R1 ---> Web Server (203.0.113.80:80),Router R1,"IP Address: 172.16.5.20
+Subnet Mask: 255.255.255.0
+Default Gateway: 172.16.5.1
+DNS: 8.8.8.8",show access-lists RESTRICT_WEB,"Extended IP access list RESTRICT_WEB
+    10 permit icmp any any (16 matches)
+    20 deny tcp any host 203.0.113.80 eq www (45 matches)
+    30 deny tcp any host 203.0.113.80 eq 443 (12 matches)
+    40 permit ip any any (130 matches)",ACL,Extended ACL RESTRICT_WEB contains explicit deny rules (lines 20 and 30) for TCP ports 80 and 443 targeting web server 203.0.113.80.,Layer 4 - Transport,Extended ACL Protocol and Port Filtering (TCP 80/443 vs ICMP),HIGH,show running-config interface GigabitEthernet0/1,"R1(config)# ip access-list extended RESTRICT_WEB
+R1(config-ext-nacl)# no 20
+R1(config-ext-nacl)# no 30","show access-lists shows 45 matches on 'deny tcp any host 203.0.113.80 eq www', confirming packets are filtered by ACL."
+NET021,ACL Inbound/Outbound Directional Placement Error,Guest users in 192.168.50.0/24 cannot access Internet; security policy intended to protect LAN from guests accidentally blocked all guest traffic.,Guest VLAN (192.168.50.0/24) ---> Router R1 [Gi0/0.50] ---> Internet,Router R1,"IP Address: 192.168.50.15
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.50.1
+DNS: 8.8.8.8",show running-config interface GigabitEthernet0/0.50,"Building configuration...
+
+interface GigabitEthernet0/0.50
+ encapsulation dot1Q 50
+ ip address 192.168.50.1 255.255.255.0
+ ip access-group BLOCK_GUEST in
+!
+R1# show access-lists BLOCK_GUEST
+Standard IP access list BLOCK_GUEST
+    10 deny 192.168.50.0 0.0.0.255 (154 matches)",ACL,"ACL BLOCK_GUEST was applied 'in' on subinterface Gi0/0.50, denying all guest traffic upon router entry before it can reach the Internet.",Layer 3/4 - Network/Transport,ACL Interface Directionality (Inbound vs Outbound),HIGH,show ip interface GigabitEthernet0/0.50,"R1(config)# interface GigabitEthernet0/0.50
+R1(config-subif)# no ip access-group BLOCK_GUEST in",show running-config shows 'ip access-group BLOCK_GUEST in' and ACL BLOCK_GUEST denies 192.168.50.0/24 with 154 matches.
+NET022,Extended ACL Missing Established Keyword on Return Traffic,"LAN PCs can establish outbound UDP sessions (DNS) to Internet, but outbound TCP web traffic receives no response.",Internal LAN (10.0.0.0/24) ---> Router R1 [Gi0/1 WAN] ---> Internet,Router R1,"IP Address: 10.0.0.45
+Subnet Mask: 255.255.255.0
+Default Gateway: 10.0.0.1
+DNS: 8.8.8.8",show access-lists WAN_IN,"Extended IP access list WAN_IN
+    10 permit udp any any eq domain (50 matches)
+    20 deny ip any any (198 matches)
+
+R1# show running-config interface GigabitEthernet0/1
+interface GigabitEthernet0/1
+ ip access-group WAN_IN in",ACL,The inbound WAN ACL lacks a 'permit tcp any any established' rule to allow return TCP packets (ACK/RST flags set) from external servers.,Layer 4 - Transport,Stateful TCP Inspection & ACL 'established' Keyword,HIGH,show access-lists WAN_IN,"R1(config)# ip access-list extended WAN_IN
+R1(config-ext-nacl)# 15 permit tcp any any established","show access-lists WAN_IN contains no 'established' clause, and rule 20 deny ip any any has 198 matches."
+NET023,NAT Overload ACL Missing New LAN Subnet,"Workstations in 192.168.1.0/24 can browse the Internet, but workstations in the newly added 192.168.2.0/24 subnet cannot access the Internet.","Subnet 1 & 2 ---> Router R1 [Gi0/0 LAN, Gi0/1 WAN: 203.0.113.1] ---> ISP",Router R1,"IP Address: 192.168.2.50
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.2.1
+DNS: 8.8.8.8",show ip nat statistics,"Total active translations: 12 (0 static, 12 dynamic; 12 extended)
+Outside interfaces:
+  GigabitEthernet0/1
+Inside interfaces:
+  GigabitEthernet0/0
+Hits: 320  Misses: 45
+CEF Translated packets: 320, CEF Punted packets: 0
+Expired translations: 40
+Dynamic mappings:
+-- Inside Source
+[Id: 1] access-list 1 interface GigabitEthernet0/1 overload refcount 12
+
+R1# show access-lists 1
+Standard IP access list 1
+    10 permit 192.168.1.0 0.0.0.255 (320 matches)",NAT,"NAT ACL 1 only permits subnet 192.168.1.0/24; subnet 192.168.2.0/24 is excluded from translation, causing outbound packets to remain untranslated private IPs.",Layer 3 - Network,NAT Overload (PAT) ACL Source Filtering,HIGH,show ip nat translations,R1(config)# access-list 1 permit 192.168.2.0 0.0.0.255,show access-lists 1 shows only 'permit 192.168.1.0 0.0.0.255' while Misses in NAT stats increment for 192.168.2.0/24.
+NET024,Missing 'ip nat outside' Configuration on WAN Interface,All internal LAN clients fail to browse Internet; 'show ip nat translations' remains completely empty despite active traffic.,"Internal LAN (192.168.10.0/24) ---> Router R1 [Gi0/0 Inside, Gi0/1 WAN] ---> ISP",Router R1,"IP Address: 192.168.10.20
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.10.1
+DNS: 8.8.8.8",show running-config interface GigabitEthernet0/1,"Building configuration...
+
+interface GigabitEthernet0/1
+ description Connection to ISP
+ ip address 203.0.113.6 255.255.255.252
+ duplex auto
+ speed auto
+end
+
+R1# show ip nat statistics
+Total active translations: 0
+Outside interfaces:
+  None
+Inside interfaces:
+  GigabitEthernet0/0",NAT,"The outside interface GigabitEthernet0/1 is missing the 'ip nat outside' command, so R1 never triggers NAT translation on egress traffic.",Layer 3 - Network,NAT Inside/Outside Domain Identification,CRITICAL,show ip nat statistics,"R1(config)# interface GigabitEthernet0/1
+R1(config-if)# ip nat outside",show ip nat statistics displays 'Outside interfaces: None' and 'Total active translations: 0'.
+NET025,Static NAT Mapping to Wrong Internal Host IP,External clients connecting to DMZ public IP 203.0.113.10 receive SSH prompts instead of the expected Corporate Web Portal.,External Client ---> Internet ---> R1 [NAT Router] ---> DMZ Web Server (192.168.100.80) & Admin PC (192.168.100.10),Router R1,N/A (External client hitting public IP),show ip nat translations,"Pro  Inside global         Inside local          Outside local         Outside global
+---  203.0.113.10          192.168.100.10        ---                   ---
+
+R1# show running-config | include ip nat inside source static
+ip nat inside source static 192.168.100.10 203.0.113.10",NAT,The static NAT rule maps public IP 203.0.113.10 to 192.168.100.10 (Admin PC) instead of 192.168.100.80 (Web Server).,Layer 3 - Network,Static 1-to-1 NAT IP Mapping & Port Forwarding,HIGH,show running-config | include nat,"R1(config)# no ip nat inside source static 192.168.100.10 203.0.113.10
+R1(config)# ip nat inside source static 192.168.100.80 203.0.113.10",show ip nat translations lists Inside local as 192.168.100.10 rather than web server 192.168.100.80.
+NET026,Guest Wi-Fi Security Leak into Corporate Private Subnets,Security audit confirms that guest laptop connected to Guest SSID can ping and access the corporate Payroll Server (10.0.10.50).,Guest Laptop (192.168.99.12) ---> Access Point ---> Switch-1 [VLAN 99] ---> Core Router R1 ---> Corporate VLAN 10 (10.0.10.50),Core Router R1,"IP Address: 192.168.99.12
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.99.1
+DNS: 8.8.8.8",show running-config interface GigabitEthernet0/0.99,"Building configuration...
+
+interface GigabitEthernet0/0.99
+ description Guest Wi-Fi Network
+ encapsulation dot1Q 99
+ ip address 192.168.99.1 255.255.255.0
+end
+
+R1# show access-lists GUEST_FILTER
+% No such access list: GUEST_FILTER",Wireless / Guest Wi-Fi,"The Guest Wi-Fi subinterface lacks an ACL to deny RFC1918 internal corporate subnets, allowing normal inter-VLAN routing to deliver traffic to corporate servers.",Layer 3/4 - Network/Transport,Guest Wi-Fi Isolation & Inter-VLAN Access Control,CRITICAL,show ip route 10.0.10.50,"R1(config)# ip access-list extended GUEST_RESTRICT
+R1(config-ext-nacl)# deny ip 192.168.99.0 0.0.0.255 10.0.0.0 0.255.255.255
+R1(config-ext-nacl)# permit ip 192.168.99.0 0.0.0.255 any
+R1(config)# interface GigabitEthernet0/0.99
+R1(config-subif)# ip access-group GUEST_RESTRICT in","show running-config interface Gi0/0.99 shows no ip access-group configured, leaving inter-VLAN routing unrestricted."
+NET027,Lightweight Access Point Switchport Configured as Access Instead of Trunk,Lightweight Access Point (LAP) cannot establish CAPWAP tunnel with WLC; AP status LED flashes red/amber.,Cisco LAP [Fa0/8] ---> Switch-1 ---> Wireless LAN Controller (WLC: 10.10.10.10),Switch-1,N/A (Infrastructure AP device),show interfaces FastEthernet0/8 switchport,"Name: Fa0/8
+Switchport: Enabled
+Administrative Mode: static access
+Operational Mode: static access
+Administrative Trunking Encapsulation: dot1q
+Negotiation of Trunking: Off
+Access Mode VLAN: 1 (default)
+Trunking Native Mode VLAN: 1 (default)
+Voice VLAN: none",Wireless / Guest Wi-Fi,Switchport Fa0/8 is configured as an access port in VLAN 1 instead of a trunk port carrying management VLAN 100 and multiple SSID VLANs.,Layer 2 - Data Link,Access Point Switchport Modes (Trunk vs. Access) & Multi-SSID Tagging,HIGH,show interfaces FastEthernet0/8 status,"Switch-1(config)# interface FastEthernet0/8
+Switch-1(config-if)# switchport mode trunk
+Switch-1(config-if)# switchport trunk native vlan 100",show interfaces FastEthernet0/8 switchport shows Administrative Mode: static access and Access Mode VLAN: 1.
+NET028,Switchport Interface Administratively Shutdown,Server NIC shows 'Network Cable Unplugged'; link light on switchport Fa0/24 is completely dark.,Database Server ---> Switch-1 [Fa0/24],Switch-1,"IP Address: 192.168.1.100
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.1.1",show interfaces FastEthernet0/24 status,"Port      Name               Status       Vlan       Duplex  Speed Type
+Fa0/24    DB-Server-Link     disabled     10         auto    auto  10/100BaseTX
+
+Switch-1# show interfaces FastEthernet0/24
+FastEthernet0/24 is administratively down, line protocol is down (disabled)
+  Hardware is Fast Ethernet, address is 0011.2233.4455",Interface / Switchport,Switchport Fa0/24 is administratively disabled (shutdown) in software.,Layer 1 - Physical,Interface Administrative Status & Layer 1 Physical Link State,CRITICAL,show running-config interface FastEthernet0/24,"Switch-1(config)# interface FastEthernet0/24
+Switch-1(config-if)# no shutdown","show interfaces Fa0/24 status shows 'disabled' and interface state is 'administratively down, line protocol is down'."
+NET029,Port Security Violation Causing Err-Disabled State,User connected an unauthorized laptop into conference room jack; link dropped immediately and port light turned solid amber.,Conference PC [Fa0/5] ---> Switch-1,Switch-1,IP Address: 10.0.5.88 (Unreachable),show interfaces FastEthernet0/5 status,"Port      Name               Status       Vlan       Duplex  Speed Type
+Fa0/5     Conf-Room          err-disabled 5          auto    auto  10/100BaseTX
+
+Switch-1# show port-security interface FastEthernet0/5
+Port Security              : Enabled
+Port Status                : Secure-shutdown
+Violation Mode             : Shutdown
+Aging Time                 : 0 mins
+Aging Type                 : Absolute
+SecureStatic Address Aging : Disabled
+Maximum MAC Addresses      : 1
+Total MAC Addresses        : 1
+Configured MAC Addresses   : 1
+Sticky MAC Addresses       : 0
+Last Source Address:Vlan   : a483.e721.b90c:5
+Security Violation Count   : 1",Interface / Switchport,"Switchport Fa0/5 triggered a port-security violation because a foreign MAC address (a483.e721.b90c) exceeded maximum allowed MAC limit (1), placing port in err-disabled state.",Layer 2 - Data Link,Cisco Port Security Violation Actions (Shutdown/Err-disable),HIGH,show port-security interface FastEthernet0/5,"Switch-1(config)# interface FastEthernet0/5
+Switch-1(config-if)# shutdown
+Switch-1(config-if)# no shutdown",show interfaces status reports 'err-disabled' and port-security shows 'Security Violation Count: 1' and 'Secure-shutdown'.
+NET030,Trunk Link Native VLAN Mismatch,"Console logs continuously spam '%CDP-4-NATIVE_VLAN_MISMATCH: Native VLAN mismatch discovered on GigabitEthernet0/1 (1), with Switch-2 GigabitEthernet0/1 (99)'.",Switch-1 [Gi0/1] <==== 802.1Q Trunk ====> Switch-2 [Gi0/1],Switch-1,N/A (Switch-to-Switch Trunk Link),show interfaces trunk,"Port        Mode             Encapsulation  Status        Native vlan
+Gi0/1       on               802.1q         trunking      1
+
+Port        Vlans allowed on trunk
+Gi0/1       1-4094
+
+Switch-1# show cdp neighbors GigabitEthernet0/1 detail
+Device ID: Switch-2
+Entry address(es): 192.168.99.2
+Interface: GigabitEthernet0/1,  Port ID (outgoing port): GigabitEthernet0/1
+Native VLAN: 99",Trunking,"Native VLAN mismatch across the 802.1Q trunk link: Switch-1 uses Native VLAN 1 while Switch-2 uses Native VLAN 99, risking traffic leakage and STP loop inconsistencies.",Layer 2 - Data Link,802.1Q Native VLAN Tagging & CDP Mismatch Detection,HIGH,show spanning-tree interface GigabitEthernet0/1,"Switch-1(config)# interface GigabitEthernet0/1
+Switch-1(config-if)# switchport trunk native vlan 99",show interfaces trunk shows Native vlan 1 on Switch-1 while CDP neighbor detail confirms Native VLAN 99 on Switch-2.
+NET031,Trunk Allowed VLAN List Restricts Required VLAN,PCs in Engineering VLAN 40 cannot ping colleagues in VLAN 40 across the building trunk; VLAN 10 and VLAN 20 work normally.,Switch-1 [Gi0/2 Trunk] <==== Trunk ====> Switch-2 [Gi0/2 Trunk],Switch-1,"IP Address: 192.168.40.12
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.40.1",show interfaces GigabitEthernet0/2 trunk,"Port        Mode             Encapsulation  Status        Native vlan
+Gi0/2       on               802.1q         trunking      1
+
+Port        Vlans allowed on trunk
+Gi0/2       1-30
+
+Port        Vlans allowed and active in management domain
+Gi0/2       1,10,20,30
+
+Port        Vlans in spanning tree forwarding state and not pruned
+Gi0/2       1,10,20,30",Trunking,"Trunk interface Gi0/2 allowed VLAN list is restricted to '1-30', explicitly filtering and dropping all traffic for VLAN 40.",Layer 2 - Data Link,802.1Q Trunk Allowed VLAN Filtering & Pruning,HIGH,show running-config interface GigabitEthernet0/2,"Switch-1(config)# interface GigabitEthernet0/2
+Switch-1(config-if)# switchport trunk allowed vlan add 40","show interfaces trunk shows 'Vlans allowed on trunk: 1-30', omitting VLAN 40."
+NET032,Duplicate IP Address Assignment Between Static Printer and Workstation,Workstation PC-Finance experiences random disconnects; Windows popup alerts 'IP Address Conflict Detected with another system on the network'.,PC-Finance (192.168.1.75) and HP LaserJet (192.168.1.75) ---> Switch-1,PC-Finance / Switch-1,"IP Address: 192.168.1.75
+Subnet Mask: 255.255.255.0
+Default Gateway: 192.168.1.1
+DNS: 8.8.8.8",arp -a,"Interface: 192.168.1.75 --- 0xb
+  Internet Address      Physical Address      Type
+  192.168.1.1           00-1b-d4-c1-52-01     dynamic
+  192.168.1.75          00-11-22-aa-bb-cc     invalid (conflict)
+
+Switch-1# show mac address-table | include 192.168.1.75
+1    0011.22aa.bbcc    DYNAMIC     Fa0/11
+1    0025.b34a.9912    DYNAMIC     Fa0/19
+%SW_MATM-4-MACFLAP_NOTIF: Host 0011.22aa.bbcc in vlan 1 is flapping between port Fa0/11 and Fa0/19",Default Gateway,"The static IP 192.168.1.75 is configured simultaneously on both PC-Finance and an HP LaserJet printer, causing ARP table flapping on Switch-1.",Layer 3 - Network,Gratuitous ARP & Duplicate IP Detection (RFC 5227),HIGH,show mac address-table,"Reconfigure PC-Finance with an unallocated static IP address (e.g., 192.168.1.76) or switch PC-Finance to DHCP.","Switch console reports MAC flapping between Fa0/11 and Fa0/19 for IP 192.168.1.75, confirming duplicate IP assignment."
