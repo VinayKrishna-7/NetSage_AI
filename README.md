@@ -64,50 +64,6 @@
 
 ---
 
-## 📂 Project Structure
-
-```text
-NetSage-AI/
-├── app.py                      # Main 9-page interactive Streamlit dashboard
-├── rule_checker.py             # 15 deterministic networking rules (ipaddress & regex)
-├── ai_diagnosis.py             # AI diagnostic engine (offline Mock mode + API mode)
-├── reviewer.py                 # Human review tracking & agreement rate calculations
-├── data_loader.py              # Ingestion utilities for cases, reviews, and logs
-├── config.py                   # Central settings, paths, and safety disclaimers
-├── requirements.txt            # Lightweight project dependencies
-├── .env.example                # Environment variables template
-├── .gitignore                  # Git ignore rules
-├── README.md                   # Project documentation
-│
-├── data/
-│   ├── cases.csv               # 32 Cisco Packet Tracer-style troubleshooting cases (10 domains)
-│   ├── responsible_ai_log.csv  # 6 documented cases where AI was corrected
-│   ├── reviews.csv             # Human reviewer audit records
-│   └── netsage_summary_metrics.xlsx # Generated multi-sheet Excel summary
-│
-├── prompts/
-│   ├── diagnose_prompt.md      # Master AI system prompt with 3 worked examples
-│   └── helper_prompts.md       # Auxiliary prompt templates
-│
-├── dashboard/
-│   └── dashboard.py            # Analytics charts and Excel export engine
-│
-├── tests/
-│   ├── test_rule_checker.py    # 29 unit tests for deterministic rules
-│   ├── test_system_integration.py # 5 end-to-end integration tests
-│   ├── test_app_components.py  # 5 component & viva loader tests
-│   └── sample_outputs.txt      # PASS / FAIL / WARNING sample outputs
-│
-├── docs/
-│   ├── project_report.md       # 17-section formal academic project report
-│   ├── demo_script.md          # Timed 10-minute presentation & video script
-│   └── viva_questions.md       # 32 master CCNA viva questions & answers
-│
-└── screenshots/
-    └── README.md               # Screenshot capture guide
-```
-
----
 
 ## 🚀 Quick Start Guide
 
