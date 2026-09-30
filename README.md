@@ -3,9 +3,10 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Framework](https://img.shields.io/badge/Framework-Streamlit-red.svg)](https://streamlit.io/)
-[![Domain](https://img.shields.io/badge/Domain-Cisco%20Packet%20Tracer-005073.svg)]()
+[![CI](https://github.com/VinayKrishna-7/NetSage_AI/actions/workflows/python-tests.yml/badge.svg)](https://github.com/VinayKrishna-7/NetSage_AI/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-39%20Passing-brightgreen.svg)]()
-[![Safety](https://img.shields.io/badge/Safety-Human--in--the--Loop-orange.svg)]()
+[![Domain](https://img.shields.io/badge/Domain-Cisco%20Packet%20Tracer-005073.svg)]()
 
 > **In One Sentence:**  
 > An AI-assisted troubleshooter for Cisco Packet Tracer lab problems that reads symptoms and `show` command outputs, suggests likely causes and next steps, and **always requires a human to review before accepting the fix**.
