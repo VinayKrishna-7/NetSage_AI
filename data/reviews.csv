@@ -1,13 +1,13 @@
 case_id,decision,corrected_diagnosis,explanation,reviewer,timestamp
-NET001,ACCEPTED,,Tested in component suite,Test Reviewer,2026-09-30 17:38:56
-NET002,ACCEPTED,,Confirmed VLAN 30 is missing from switch database; port reports ((Inactive)).,Alice Chen (Student),2026-09-28 09:30:00
-NET003,ACCEPTED,,Confirmed subinterface encapsulation tag mismatch (dot1Q 12 vs 10).,Alice Chen (Student),2026-09-28 09:45:00
-NET004,ACCEPTED,,Confirmed switchport access VLAN was mistakenly configured as Voice VLAN 150.,Bob Patel (Student),2026-09-28 10:00:00
-NET005,EDITED,Client default gateway 192.168.20.1 is outside local subnet 192.168.10.0/24.,"AI erroneously diagnosed DNS failure. Local gateway is outside the host subnet, preventing all off-subnet routing.",Prof. Miller (CCNP),2026-09-28 10:20:00
-NET008,ACCEPTED,,Confirmed DHCP pool exhaustion; 28/28 usable leases consumed.,Bob Patel (Student),2026-09-28 10:35:00
-NET010,EDITED,DHCP default-router option has typo (192.168.1.254 instead of 192.168.1.1).,AI blamed ISP outage. Running config revealed local DHCP option typo on router R1.,Alice Chen (Student),2026-09-28 10:50:00
-NET012,ACCEPTED,,Confirmed client DNS server IP was mistyped as 8.8.4.40.,Bob Patel (Student),2026-09-28 11:10:00
-NET015,EDITED,Missing default route on edge router R1 (Gateway of last resort is not set).,"AI blamed NAT failure. In Cisco IOS, routing precedes NAT; missing default route is the primary cause.",Prof. Miller (CCNP),2026-09-28 11:25:00
-NET019,REJECTED,Standard ACL 10 outbound drops host 192.168.10.10 via implicit deny.,AI hallucinated trunking issue. ACL counters show 87 implicit deny matches blocking host.,Prof. Miller (CCNP),2026-09-28 11:40:00
-NET024,REJECTED,WAN interface Gi0/1 is missing 'ip nat outside' statement.,AI hallucinated physical link down condition. NAT stats report Outside interfaces: None.,Prof. Miller (CCNP),2026-09-28 12:00:00
-NET026,REJECTED,Guest Wi-Fi subinterface Gi0/0.99 lacks an ACL restricting corporate private subnets.,AI misdiagnosed WPA2 key compromise. Default inter-VLAN routing allowed guest traffic to reach corporate VLAN.,Prof. Miller (CCNP),2026-09-28 12:15:00
+NET001,ACCEPTED,,AI diagnosis correctly identified Fa0/2 assigned to VLAN 20 instead of 10 based on show vlan brief.,Human Reviewer,2026-09-30 18:20:39
+NET002,ACCEPTED,,Confirmed VLAN 30 is missing from switch database; port reports ((Inactive)).,Student Reviewer,2026-09-28 09:30:00
+NET003,ACCEPTED,,Confirmed subinterface encapsulation tag mismatch (dot1Q 12 vs 10).,Student Reviewer,2026-09-28 09:45:00
+NET004,ACCEPTED,,Confirmed switchport access VLAN was mistakenly configured as Voice VLAN 150.,Project Team,2026-09-28 10:00:00
+NET005,EDITED,Client default gateway 192.168.20.1 is outside local subnet 192.168.10.0/24.,"AI erroneously diagnosed DNS failure. Local gateway is outside the host subnet, preventing all off-subnet routing.",Human Reviewer,2026-09-28 10:20:00
+NET008,ACCEPTED,,Confirmed DHCP pool exhaustion; 28/28 usable leases consumed.,Project Team,2026-09-28 10:35:00
+NET010,EDITED,DHCP default-router option has typo (192.168.1.254 instead of 192.168.1.1).,AI blamed ISP outage. Running config revealed local DHCP option typo on router R1.,Student Reviewer,2026-09-28 10:50:00
+NET012,ACCEPTED,,Confirmed client DNS server IP was mistyped as 8.8.4.40.,Project Team,2026-09-28 11:10:00
+NET015,EDITED,Missing default route on edge router R1 (Gateway of last resort is not set).,"AI blamed NAT failure. In Cisco IOS, routing precedes NAT; missing default route is the primary cause.",Human Reviewer,2026-09-28 11:25:00
+NET019,REJECTED,Standard ACL 10 outbound drops host 192.168.10.10 via implicit deny.,AI hallucinated trunking issue. ACL counters show 87 implicit deny matches blocking host.,Human Reviewer,2026-09-28 11:40:00
+NET024,REJECTED,WAN interface Gi0/1 is missing 'ip nat outside' statement.,AI hallucinated physical link down condition. NAT stats report Outside interfaces: None.,Human Reviewer,2026-09-28 12:00:00
+NET026,REJECTED,Guest Wi-Fi subinterface Gi0/0.99 lacks an ACL restricting corporate private subnets.,AI misdiagnosed WPA2 key compromise. Default inter-VLAN routing allowed guest traffic to reach corporate VLAN.,Human Reviewer,2026-09-28 12:15:00

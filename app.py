@@ -279,7 +279,7 @@ if page == "1. Home":
 # =============================================================================
 elif page == "2. Case Dataset":
     st.title("📚 Cisco Troubleshooting Case Dataset")
-    st.caption("Comprehensive collection of 32 verified Packet Tracer scenarios covering 10 networking fault domains.")
+    st.caption("Comprehensive collection of 32 Cisco Packet Tracer-style troubleshooting cases covering 10 networking fault domains.")
 
     if cases_df.empty:
         st.warning("No cases found in data/cases.csv.")
@@ -506,7 +506,7 @@ elif page == "3. Troubleshoot a Case":
 
         with st.form(f"review_form_{selected_case_id}"):
             st.write("Submit or modify human review decision for this diagnosis:")
-            reviewer_name = st.text_input("Reviewer Name / Student ID", value=existing_rev["reviewer"] if existing_rev else "Alice Chen (Student)")
+            reviewer_name = st.text_input("Reviewer Name / Student ID", value=existing_rev["reviewer"] if existing_rev else "Student Reviewer")
             decision = st.selectbox(
                 "Human Review Decision",
                 ALLOWED_REVIEW_DECISIONS,
@@ -757,7 +757,7 @@ elif page == "7. Responsible AI Log":
     st.markdown(
         """
         In academic networking and enterprise deployments, **unsupervised AI is unsafe**.
-        This log documents specific real-world cases where NetSage AI produced incorrect advice, 
+        This log documents specific evaluation cases where NetSage AI produced incorrect advice, 
         illustrating why **Human-in-the-Loop** review is essential.
         """
     )

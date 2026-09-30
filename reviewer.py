@@ -45,7 +45,7 @@ def init_reviews_storage():
                 "decision": REVIEW_STATUS_ACCEPTED,
                 "corrected_diagnosis": "",
                 "explanation": "AI diagnosis correctly identified Fa0/2 assigned to VLAN 20 instead of 10 based on show vlan brief.",
-                "reviewer": "Prof. Miller (CCNP)",
+                "reviewer": "Human Reviewer",
                 "timestamp": "2026-09-28 09:15:00",
             },
             {
@@ -53,7 +53,7 @@ def init_reviews_storage():
                 "decision": REVIEW_STATUS_ACCEPTED,
                 "corrected_diagnosis": "",
                 "explanation": "Confirmed VLAN 30 is missing from switch database; port reports ((Inactive)).",
-                "reviewer": "Alice Chen (Student)",
+                "reviewer": "Student Reviewer",
                 "timestamp": "2026-09-28 09:30:00",
             },
             {
@@ -61,7 +61,7 @@ def init_reviews_storage():
                 "decision": REVIEW_STATUS_ACCEPTED,
                 "corrected_diagnosis": "",
                 "explanation": "Confirmed subinterface encapsulation tag mismatch (dot1Q 12 vs 10).",
-                "reviewer": "Alice Chen (Student)",
+                "reviewer": "Student Reviewer",
                 "timestamp": "2026-09-28 09:45:00",
             },
             {
@@ -69,7 +69,7 @@ def init_reviews_storage():
                 "decision": REVIEW_STATUS_ACCEPTED,
                 "corrected_diagnosis": "",
                 "explanation": "Confirmed switchport access VLAN was mistakenly configured as Voice VLAN 150.",
-                "reviewer": "Bob Patel (Student)",
+                "reviewer": "Project Team",
                 "timestamp": "2026-09-28 10:00:00",
             },
             {
@@ -77,7 +77,7 @@ def init_reviews_storage():
                 "decision": REVIEW_STATUS_EDITED,
                 "corrected_diagnosis": "Client default gateway 192.168.20.1 is outside local subnet 192.168.10.0/24.",
                 "explanation": "AI erroneously diagnosed DNS failure. Local gateway is outside the host subnet, preventing all off-subnet routing.",
-                "reviewer": "Prof. Miller (CCNP)",
+                "reviewer": "Human Reviewer",
                 "timestamp": "2026-09-28 10:20:00",
             },
             {
@@ -85,7 +85,7 @@ def init_reviews_storage():
                 "decision": REVIEW_STATUS_ACCEPTED,
                 "corrected_diagnosis": "",
                 "explanation": "Confirmed DHCP pool exhaustion; 28/28 usable leases consumed.",
-                "reviewer": "Bob Patel (Student)",
+                "reviewer": "Project Team",
                 "timestamp": "2026-09-28 10:35:00",
             },
             {
@@ -93,7 +93,7 @@ def init_reviews_storage():
                 "decision": REVIEW_STATUS_EDITED,
                 "corrected_diagnosis": "DHCP default-router option has typo (192.168.1.254 instead of 192.168.1.1).",
                 "explanation": "AI blamed ISP outage. Running config revealed local DHCP option typo on router R1.",
-                "reviewer": "Alice Chen (Student)",
+                "reviewer": "Student Reviewer",
                 "timestamp": "2026-09-28 10:50:00",
             },
             {
@@ -101,7 +101,7 @@ def init_reviews_storage():
                 "decision": REVIEW_STATUS_ACCEPTED,
                 "corrected_diagnosis": "",
                 "explanation": "Confirmed client DNS server IP was mistyped as 8.8.4.40.",
-                "reviewer": "Bob Patel (Student)",
+                "reviewer": "Project Team",
                 "timestamp": "2026-09-28 11:10:00",
             },
             {
@@ -109,7 +109,7 @@ def init_reviews_storage():
                 "decision": REVIEW_STATUS_EDITED,
                 "corrected_diagnosis": "Missing default route on edge router R1 (Gateway of last resort is not set).",
                 "explanation": "AI blamed NAT failure. In Cisco IOS, routing precedes NAT; missing default route is the primary cause.",
-                "reviewer": "Prof. Miller (CCNP)",
+                "reviewer": "Human Reviewer",
                 "timestamp": "2026-09-28 11:25:00",
             },
             {
@@ -117,7 +117,7 @@ def init_reviews_storage():
                 "decision": REVIEW_STATUS_REJECTED,
                 "corrected_diagnosis": "Standard ACL 10 outbound drops host 192.168.10.10 via implicit deny.",
                 "explanation": "AI hallucinated trunking issue. ACL counters show 87 implicit deny matches blocking host.",
-                "reviewer": "Prof. Miller (CCNP)",
+                "reviewer": "Human Reviewer",
                 "timestamp": "2026-09-28 11:40:00",
             },
             {
@@ -125,7 +125,7 @@ def init_reviews_storage():
                 "decision": REVIEW_STATUS_REJECTED,
                 "corrected_diagnosis": "WAN interface Gi0/1 is missing 'ip nat outside' statement.",
                 "explanation": "AI hallucinated physical link down condition. NAT stats report Outside interfaces: None.",
-                "reviewer": "Prof. Miller (CCNP)",
+                "reviewer": "Human Reviewer",
                 "timestamp": "2026-09-28 12:00:00",
             },
             {
@@ -133,7 +133,7 @@ def init_reviews_storage():
                 "decision": REVIEW_STATUS_REJECTED,
                 "corrected_diagnosis": "Guest Wi-Fi subinterface Gi0/0.99 lacks an ACL restricting corporate private subnets.",
                 "explanation": "AI misdiagnosed WPA2 key compromise. Default inter-VLAN routing allowed guest traffic to reach corporate VLAN.",
-                "reviewer": "Prof. Miller (CCNP)",
+                "reviewer": "Human Reviewer",
                 "timestamp": "2026-09-28 12:15:00",
             },
         ]
@@ -181,12 +181,16 @@ def record_review(
     init_reviews_storage()
     df = load_reviews()
 
+    corr_diag_str = "" if (corrected_diagnosis is None or pd.isna(corrected_diagnosis)) else str(corrected_diagnosis).strip()
+    expl_str = "" if (explanation is None or pd.isna(explanation)) else str(explanation).strip()
+    rev_str = "Anonymous Reviewer" if (reviewer is None or pd.isna(reviewer)) else str(reviewer).strip() or "Anonymous Reviewer"
+
     new_record = {
-        "case_id": case_id.strip(),
+        "case_id": str(case_id).strip(),
         "decision": decision_clean,
-        "corrected_diagnosis": corrected_diagnosis.strip(),
-        "explanation": explanation.strip(),
-        "reviewer": reviewer.strip() or "Anonymous Reviewer",
+        "corrected_diagnosis": corr_diag_str,
+        "explanation": expl_str,
+        "reviewer": rev_str,
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 

@@ -47,11 +47,16 @@ def test_all_cases_ai_diagnosis():
 
 def test_reviewer_roundtrip():
     """Verify recording and updating reviews."""
-    rec = record_review("NET001", "ACCEPTED", "", "Tested in component suite", "Test Reviewer")
-    assert rec["decision"] == "ACCEPTED"
-    fetched = get_review_for_case("NET001")
-    assert fetched is not None
-    assert fetched["reviewer"] == "Test Reviewer"
+    orig = get_review_for_case("NET001")
+    try:
+        rec = record_review("NET001", "ACCEPTED", "", "AI diagnosis correctly identified Fa0/2 assigned to VLAN 20 instead of 10 based on show vlan brief.", "Human Reviewer")
+        assert rec["decision"] == "ACCEPTED"
+        fetched = get_review_for_case("NET001")
+        assert fetched is not None
+        assert fetched["reviewer"] == "Human Reviewer"
+    finally:
+        if orig:
+            record_review("NET001", orig["decision"], orig.get("corrected_diagnosis", ""), orig.get("explanation", ""), orig.get("reviewer", "Human Reviewer"))
     print("[PASS] Reviewer roundtrip verified.")
 
 

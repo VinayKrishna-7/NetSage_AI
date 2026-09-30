@@ -80,7 +80,7 @@ NetSage-AI/
 ├── README.md                   # Project documentation
 │
 ├── data/
-│   ├── cases.csv               # 32 verified troubleshooting cases (10 domains)
+│   ├── cases.csv               # 32 Cisco Packet Tracer-style troubleshooting cases (10 domains)
 │   ├── responsible_ai_log.csv  # 6 documented cases where AI was corrected
 │   ├── reviews.csv             # Human reviewer audit records
 │   └── netsage_summary_metrics.xlsx # Generated multi-sheet Excel summary
